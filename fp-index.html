@@ -1,0 +1,195 @@
+
+<html>
+
+<head>
+
+  <title>front post</title>
+
+
+  <link rel="stylesheet" href="fp-stylesheet.css">
+
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+  <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+
+
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+</head>
+
+</html>
+
+
+
+<script>
+
+
+
+/* globals RavelryApi */
+
+RavelryApi = function(base) {
+  this.base = base;
+  // it's using these values, not so the others. no it's using both
+  this.authUsername = 'read-3ac840f67d0a82d821c220af8c076322';
+  this.authPassword = 'ebDjhg/6VFw2+rhyZhnmbC6n9ULkQzTVtMLEuviW';
+  this.debugFunction = null;
+};
+
+
+RavelryApi.prototype.get = function(url) {
+  const headers = new Headers();
+  const debugFunction = this.debugFunction;
+
+
+  headers.append('Authorization', 'Basic ' + btoa(this.authUsername + ":" + this.authPassword));
+
+  return fetch(url, { method: 'GET', headers: headers }).then(function(response) {
+    return response.json();
+  }).then(function(json) {
+    if (debugFunction) debugFunction(json);
+    return json;
+  });
+};
+
+// Retrieve a list of projects for a user: https://www.ravelry.com/api#projects_list
+// Pagination is optional, default is no pagination
+
+RavelryApi.prototype.projectsList = function(username, page) {
+  const pageSize = 105;
+  const url = this.base + '/projects/' + username + '/list.json?page=' + page + '&page_size=' + pageSize;
+  return this.get(url);
+};
+
+
+
+
+
+
+// The above is all we need to get some JSON from the API!
+
+
+/* globals ApiDemo */
+
+ApiDemo = function() {
+  this.ravelryApiClient = null;
+  this.currentProjectPage = null;
+
+
+  this.addEventListeners();
+};
+
+ApiDemo.prototype.createApiClient = function(authUsername, authPassword) {
+  this.ravelryApiClient = new RavelryApi('https://api.ravelry.com');
+  this.ravelryApiClient.debugFunction = function(json) {
+    var inspector = document.getElementById('json-inspector');
+    inspector.style.display = 'block';
+    inspector.value = JSON.stringify(json, null, 2);
+    console.log(json);
+  };
+};
+
+
+ApiDemo.prototype.addEventListeners = function() {
+  const projectListForm = document.getElementById('projects-list-form');
+
+
+  const submitProjectSearch = function() {
+    const username = projectListForm.querySelector("input[name='username']").value;
+    this.renderProjects(username, this.currentProjectPage);
+  }.bind(this);
+
+    const usernameKey = 'read-3ac840f67d0a82d821c2520af8c076322';
+    const passwordKey = 'ebDjhg/6VFw2+rhyZhnmbC6n9ULkQzTVtMLEuviW';
+    this.createApiClient(usernameKey, passwordKey);
+
+    document.getElementById('api-request').style.display = 'block';
+
+    submitProjectSearch();
+
+    return false;
+
+
+};
+
+
+ApiDemo.prototype.renderProjects = function(username, page) {
+
+  document.getElementById('loading_indicator').style.display = 'inline-block';
+
+  this.ravelryApiClient.projectsList(username, page).then(function(json) {
+    document.getElementById('loading_indicator').style.display = 'none';
+
+
+
+
+  });
+};
+
+
+
+
+
+
+
+// go!
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", function() {
+
+
+
+    new ApiDemo();
+  });
+} else {
+  // new ApiDemo();
+
+}
+
+
+</script>
+
+
+
+
+  <body>
+
+
+
+    <hr/>
+
+    <div id="api-request" class="section" style="display: none;">
+
+      <p>
+        <form id="projects-list-form">
+          List projects for...
+          <input type="text" name="username" value="Tasha82"/>
+          <span class="spinner" id="loading_indicator" style="display: none;"></span>
+        </form>
+      </p>
+
+
+
+
+
+
+    <div class="section">
+
+      <form>
+
+        <textarea id="json-inspector" class="inspector" style="display: none;">
+
+        </textarea>
+
+      </form>
+
+    </div>
+
+
+
+
+  </body>
+</html>
